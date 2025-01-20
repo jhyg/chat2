@@ -1,108 +1,166 @@
 <template>
-    <v-card style="width:450px; height:100%;" outlined>
-        <template slot="progress">
-            <v-progress-linear
-                    color="primary-darker-1"
-                    height="10"
-                    indeterminate
-            ></v-progress-linear>
-        </template>
+    <v-card class="chat-room-card" outlined>
+        <v-card-title class="chat-room-header">
+            <v-avatar
+                color="primary"
+                size="40"
+                class="mr-3"
+            >
+                <span class="white--text">{{ value.roomName ? value.roomName[0].toUpperCase() : 'C' }}</span>
+            </v-avatar>
+            
+            <div class="chat-room-title">
+                <div class="title" v-if="value._links">
+                    {{ value.roomName }}
+                    <v-chip
+                        x-small
+                        class="ml-2"
+                        color="primary"
+                        label
+                    >
+                        #{{ decode(value._links.self.href.split("/")[value._links.self.href.split("/").length - 1]) }}
+                    </v-chip>
+                </div>
+                <div class="subtitle-2 grey--text">
+                    {{ value.roomId }}
+                </div>
+            </div>
 
-        <v-card-title v-if="value._links">
-            ChatRoom # {{decode(value._links.self.href.split("/")[value._links.self.href.split("/").length - 1])}}
-        </v-card-title >
-        <v-card-title v-else>
-            ChatRoom
-        </v-card-title >        
+            <v-spacer></v-spacer>
 
-        <v-card-text style="background-color: white;">
-            <String v-if="editMode" label="RoomId" v-model="value.roomId" :editMode="editMode" :inputUI="''"/>
-            <String label="RoomPw" v-model="value.roomPw" :editMode="editMode" :inputUI="''"/>
-            <String label="RoomName" v-model="value.roomName" :editMode="editMode" :inputUI="''"/>
+            <v-menu bottom left>
+                <template v-slot:activator="{ on, attrs }">
+                    <v-btn
+                        icon
+                        v-bind="attrs"
+                        v-on="on"
+                    >
+                        <v-icon>mdi-dots-vertical</v-icon>
+                    </v-btn>
+                </template>
+
+                <v-list>
+                    <v-list-item @click="edit" v-if="!editMode">
+                        <v-list-item-icon>
+                            <v-icon>mdi-pencil</v-icon>
+                        </v-list-item-icon>
+                        <v-list-item-title>수정</v-list-item-title>
+                    </v-list-item>
+                    
+                    <v-list-item @click="remove" v-if="!editMode">
+                        <v-list-item-icon>
+                            <v-icon>mdi-delete</v-icon>
+                        </v-list-item-icon>
+                        <v-list-item-title>삭제</v-list-item-title>
+                    </v-list-item>
+                </v-list>
+            </v-menu>
+        </v-card-title>
+
+        <v-divider></v-divider>
+
+        <v-card-text class="chat-room-content">
+            <v-form v-if="editMode" ref="form">
+                <v-text-field
+                    v-if="editMode"
+                    v-model="value.roomId"
+                    label="Room ID"
+                    outlined
+                    dense
+                    :disabled="!isNew"
+                ></v-text-field>
+                
+                <v-text-field
+                    v-model="value.roomPw"
+                    label="Room Password"
+                    :type="showPassword ? 'text' : 'password'"
+                    outlined
+                    dense
+                    :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                    @click:append="showPassword = !showPassword"
+                ></v-text-field>
+                
+                <v-text-field
+                    v-model="value.roomName"
+                    label="Room Name"
+                    outlined
+                    dense
+                ></v-text-field>
+            </v-form>
+            
+            <v-list v-else two-line>
+                <v-list-item>
+                    <v-list-item-icon>
+                        <v-icon>mdi-shield-lock</v-icon>
+                    </v-list-item-icon>
+                    <v-list-item-content>
+                        <v-list-item-title>비밀번호</v-list-item-title>
+                        <v-list-item-subtitle>{{ value.roomPw ? '설정됨' : '설정되지 않음' }}</v-list-item-subtitle>
+                    </v-list-item-content>
+                </v-list-item>
+            </v-list>
         </v-card-text>
 
-        <v-card-actions style="background-color: white;">
-            <v-spacer></v-spacer>
-            <div v-if="!editMode">
-                <v-btn
-                    color="primary"
-                    text
-                    @click="edit"
-                >
-                    수정
-                </v-btn>
-                <v-btn
-                    color="primary"
-                    text
-                    @click="remove"
-                >
-                    삭제
-                </v-btn>
-            </div>
-            <div v-else>
+        <v-divider></v-divider>
+
+        <v-card-actions class="chat-room-actions">
+            <template v-if="editMode">
                 <v-btn
                     color="primary"
                     text
                     @click="save"
                 >
-                    DeleteChatRoom
+                    <v-icon left>mdi-content-save</v-icon>
+                    저장
                 </v-btn>
                 <v-btn
-                    color="primary"
-                    text
-                    @click="save"
-                >
-                    UpdateChatRoom
-                </v-btn>
-                <v-btn
-                    color="primary"
                     text
                     @click="editMode = false"
-                    v-if="editMode && !isNew"
+                    v-if="!isNew"
                 >
                     취소
                 </v-btn>
-            </div>
-        </v-card-actions>
-        <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn
-                v-if="!editMode"
-                color="primary"
-                text
-                @click="createChatRoom"
-            >
-                CreateChatRoom
-            </v-btn>
-            <v-btn
-                v-if="!editMode"
-                color="primary"
-                text
-                @click="openEnterChatRoom"
-            >
-                EnterChatRoom
-            </v-btn>
-            <v-dialog v-model="enterChatRoomDiagram" width="500">
-                <EnterChatRoomCommand
-                    @closeDialog="closeEnterChatRoom"
-                    @enterChatRoom="enterChatRoom"
-                ></EnterChatRoomCommand>
-            </v-dialog>
+            </template>
+            <template v-else>
+                <v-btn
+                    color="primary"
+                    outlined
+                    @click="openEnterChatRoom"
+                    class="flex-grow-1"
+                >
+                    <v-icon left>mdi-login</v-icon>
+                    입장하기
+                </v-btn>
+            </template>
         </v-card-actions>
 
+        <!-- Enter Chat Room Dialog -->
+        <v-dialog v-model="enterChatRoomDiagram" max-width="500px">
+            <EnterChatRoomCommand
+                @closeDialog="closeEnterChatRoom"
+                @enterChatRoom="enterChatRoom"
+            ></EnterChatRoomCommand>
+        </v-dialog>
+
+        <!-- Snackbar -->
         <v-snackbar
             v-model="snackbar.status"
-            :top="true"
             :timeout="snackbar.timeout"
-            color="error"
+            :color="snackbar.color"
+            top
         >
             {{ snackbar.text }}
-            <v-btn dark text @click="snackbar.status = false">
-                Close
-            </v-btn>
+            <template v-slot:action="{ attrs }">
+                <v-btn
+                    text
+                    v-bind="attrs"
+                    @click="snackbar.status = false"
+                >
+                    닫기
+                </v-btn>
+            </template>
         </v-snackbar>
     </v-card>
-
 </template>
 
 <script>
@@ -124,8 +182,10 @@
                 status: false,
                 timeout: 5000,
                 text: '',
+                color: 'error'
             },
             enterChatRoomDiagram: false,
+            showPassword: false,
         }),
 	async created() {
         },
@@ -249,6 +309,16 @@
                         for(var k in temp.data) {
                             this.value[k]=temp.data[k];
                         }
+                        
+                        // 사용자 정보 로컬스토리지에 저장
+                        localStorage.setItem('chatUserInfo', JSON.stringify({
+                            userId: params.userId,
+                            userName: params.userName,
+                            userPassWord: params.userPassWord
+                        }));
+                        
+                        // 채팅방으로 라우터 이동
+                        this.$router.push(`/chats/chatRooms/${this.value.roomId}`);
                     }
 
                     this.editMode = false;
@@ -272,3 +342,35 @@
     }
 </script>
 
+<style scoped>
+.chat-room-card {
+    width: 450px;
+    height: 100%;
+    transition: all 0.3s;
+}
+
+.chat-room-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+}
+
+.chat-room-header {
+    background-color: #f8f9fa;
+}
+
+.chat-room-title {
+    overflow: hidden;
+}
+
+.chat-room-content {
+    padding: 20px;
+}
+
+.chat-room-actions {
+    padding: 16px;
+}
+
+.v-btn {
+    text-transform: none;
+}
+</style>

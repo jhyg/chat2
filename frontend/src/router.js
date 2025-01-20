@@ -35,8 +35,6 @@ export default new Router({
                 name: 'ChatMessageDetail',
                 component: ChatMessageDetail
             },
-
-
-
+            
     ]
 })
