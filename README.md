@@ -10,22 +10,22 @@ npm run serve
 1. Install Supabase
 	macOs		
     ``` 
-        brew install supabase/tap/supabase
-		brew upgrade supabase
+    brew install supabase/tap/supabase
+    brew upgrade supabase
     ```
 	windows
     ```
-		scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
-		scoop install supabase
-		scoop update supabase
+    scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
+    scoop install supabase
+    scoop update supabase
     ```
 
 2. Start Docker Desktop 
 
 3. Start Supabase
 	```
-		supabase init
-		supabase start
+    supabase init
+    supabase start
 	```
 
 4. Connect Supabase to supabase.js
@@ -37,20 +37,20 @@ npm run serve
 6. Create Tables
     Access the dashboard, go to SQL editor, enter the following SQL and execute:
     ```
-        CREATE TABLE IF NOT EXISTS chatrooms (
-            room_id VARCHAR(255) PRIMARY KEY,
-            room_pw VARCHAR(255),
-            room_name VARCHAR(255),
-            created_at TIMESTAMP DEFAULT NOW()
-        );
+    CREATE TABLE IF NOT EXISTS chatrooms (
+        room_id VARCHAR(255) PRIMARY KEY,
+        room_pw VARCHAR(255),
+        room_name VARCHAR(255),
+        created_at TIMESTAMP DEFAULT NOW()
+    );
 
-        CREATE TABLE IF NOT EXISTS messages (
-            message_id VARCHAR(255) PRIMARY KEY,
-            room_id VARCHAR(255),
-            user_id VARCHAR(255),
-            content TEXT,
-            timestamp TIMESTAMP DEFAULT NOW()
-        );
+    CREATE TABLE IF NOT EXISTS messages (
+        message_id VARCHAR(255) PRIMARY KEY,
+        room_id VARCHAR(255),
+        user_id VARCHAR(255),
+        content TEXT,
+        timestamp TIMESTAMP DEFAULT NOW()
+    );
     ```
 
 7. Enable Realtime for messages table
@@ -58,5 +58,5 @@ npm run serve
 
 9. Stop Supabase
     ```
-        supabase stop
+    supabase stop
     ```
