@@ -13,7 +13,7 @@
             <v-form ref="form">
                 
                 <v-text-field
-                    v-model="value.userId"
+                    v-model="value.user_id"
                     label="아이디"
                     prepend-inner-icon="mdi-account"
                     :rules="[v => !!v || '아이디를 입력해주세요']"
@@ -23,7 +23,7 @@
                 ></v-text-field>
 
                 <v-text-field
-                    v-model="value.userName"
+                    v-model="value.user_name"
                     label="닉네임"
                     prepend-inner-icon="mdi-card-account-details"
                     :rules="[v => !!v || '닉네임을 입력해주세요']"
@@ -33,7 +33,7 @@
                 ></v-text-field>
 
                 <v-text-field
-                    v-model="value.userPassWord"
+                    v-model="value.user_pw"
                     label="비밀번호"
                     prepend-inner-icon="mdi-lock"
                     :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"

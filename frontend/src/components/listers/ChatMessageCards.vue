@@ -104,9 +104,9 @@
             me.values = temp.data._embedded.messages;
             
             me.newValue = {
-                'messageId': '',
-                'roomId': '',
-                'userId': '',
+                'message_id': '',
+                'room_id': '',
+                'user_id': '',
                 'content': '',
             }
         },

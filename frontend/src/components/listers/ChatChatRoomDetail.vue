@@ -2,22 +2,22 @@
     <v-card outlined>
         <v-card-title class="chat-header">
             <v-icon left>mdi-chat</v-icon>
-            {{chatRoomInfo.roomName}} 
+            {{chatRoomInfo.room_name}} 
             <v-chip small class="ml-2">
-                Room #{{chatRoomInfo._links.self.href.split("/")[chatRoomInfo._links.self.href.split("/").length - 1]}}
+                Room #{{chatRoomInfo.room_id}}
             </v-chip>
         </v-card-title>
 
         <!-- 채팅 메시지 영역 -->
         <v-card-text class="chat-container">
             <div class="messages-wrapper">
-                <div v-for="message in messages" 
-                     :key="message._links.self.href"
-                     :class="['message-item', message.userId === userInfo.userId ? 'my-message' : 'other-message']">
+                <div v-for="(message, index) in messages" 
+                     :key="index"
+                     :class="['message-item', message.user_id === userInfo.user_id ? 'my-message' : 'other-message']">
                     
                     <!-- 상대방 메시지 -->
-                    <template v-if="message.userId !== userInfo.userId">
-                        <div class="user-name">{{ message.userId }}</div>
+                    <template v-if="message.user_id !== userInfo.user_id">
+                        <div class="user-name">{{ message.user_id }}</div>
                         <div class="message-bubble other">
                             {{ message.content }}
                         </div>
@@ -74,60 +74,82 @@
             newMessage: '',
         }),
         async created() {
-            var me = this;
-            var params = this.$route.params;
-            var temp = await axios.get(axios.fixUrl('/chatRooms/' + params.id))
-            if(temp.data) {
-                me.chatRoomInfo = temp.data
-                me.chatRoomInfo.id = params.id
-            }
-
-            const messageResponse = await axios.get(axios.fixUrl('/messages'))
-            this.messages = messageResponse.data._embedded.messages.filter(
-                msg => msg.roomId === params.id
-            );
-
             const storedUserInfo = localStorage.getItem('chatUserInfo');
             if (storedUserInfo) {
                 this.userInfo = JSON.parse(storedUserInfo);
             }
+            await this.loadChatRoomInfo();
+            await this.loadMessages();
+            this.setupRealtimeMessages();
         },
         methods: {
+            async loadChatRoomInfo() {
+                try {
+                    const { data, error } = await this.$supabase
+                    .from('chatrooms')
+                    .select('*')
+                    .eq('room_id', this.$route.params.id)
+                    .single();
+
+                    if (error) throw error;
+
+                    this.chatRoomInfo = data;
+                } catch (e) {
+                    console.error('Error loading chat room info:', e);
+                }
+            },
+            async loadMessages() {
+                try {
+                    const { data, error } = await this.$supabase
+                    .from('messages')
+                    .select('*')
+                    .eq('room_id', this.$route.params.id)
+                    .order('timestamp', { ascending: true });
+
+                    if (error) throw error;
+
+                    this.messages = data;
+                } catch (e) {
+                    console.error('Error loading messages:', e);
+                }
+            },
+            setupRealtimeMessages() {
+                this.$supabase
+                .channel('public:messages')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `room_id=eq.${this.$route.params.id}` }, payload => {
+                    this.messages.push(payload.new);
+                })
+                .subscribe();
+            },
+            async sendMessage() {
+                if (!this.newMessage.trim()) return;
+
+                try {
+                    const messageData = {
+                        message_id: this.generateUUID(),
+                        room_id: this.chatRoomInfo.room_id,
+                        user_id: this.userInfo.user_id,
+                        content: this.newMessage,
+                        timestamp: new Date().toISOString()
+                    };
+
+                    const { error } = await this.$supabase
+                    .from('messages')
+                    .insert([messageData]);
+
+                    if (error) throw error;
+
+                    this.newMessage = '';
+                } catch (e) {
+                    console.error('메시지 전송 실패:', e);
+                }
+            },
             generateUUID() {
                 return 'm' + 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
                     var r = Math.random() * 16 | 0,
                         v = c == 'x' ? r : (r & 0x3 | 0x8);
                     return v.toString(16);
                 });
-            },
-            async sendMessage() {
-                if (!this.newMessage.trim()) return;
-                
-                try {
-                    const messageData = {
-                        messageId: this.generateUUID(),
-                        roomId: this.chatRoomInfo.id,
-                        userId: this.userInfo.userId,
-                        content: this.newMessage
-                    };
-
-                    const response = await axios.post(axios.fixUrl('/messages'), messageData);
-                    
-                    if (response.status === 200 || response.status === 201) {
-                        this.messages.push(response.data);
-                        this.newMessage = ''; 
-                        
-                        this.$nextTick(() => {
-                            const container = document.querySelector('.chat-container');
-                            container.scrollTop = container.scrollHeight;
-                        });
-                    }
-
-                    
-                    this.newMessage = ''; 
-                } catch (e) {
-                    console.error('메시지 전송 실패:', e);
-                }
             },
             goList() {
                 var path = window.location.href.slice(window.location.href.indexOf("/#/"), window.location.href.lastIndexOf("/#"));

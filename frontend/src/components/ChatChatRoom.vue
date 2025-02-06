@@ -6,23 +6,23 @@
                 size="40"
                 class="mr-3"
             >
-                <span class="white--text">{{ value.roomName ? value.roomName[0].toUpperCase() : 'C' }}</span>
+                <span class="white--text">{{ value.room_name ? value.room_name[0].toUpperCase() : 'C' }}</span>
             </v-avatar>
             
             <div class="chat-room-title">
-                <div class="title" v-if="value._links">
-                    {{ value.roomName }}
+                <div class="title" v-if="value">
+                    {{ value.room_name }}
                     <v-chip
                         x-small
                         class="ml-2"
                         color="primary"
                         label
                     >
-                        #{{ decode(value._links.self.href.split("/")[value._links.self.href.split("/").length - 1]) }}
+                        #{{ value.room_id }}
                     </v-chip>
                 </div>
                 <div class="subtitle-2 grey--text">
-                    {{ value.roomId }}
+                    {{ value.created_at }}
                 </div>
             </div>
 
@@ -63,7 +63,7 @@
             <v-form v-if="editMode" ref="form">
                 <v-text-field
                     v-if="editMode"
-                    v-model="value.roomId"
+                    v-model="value.room_id"
                     label="Room ID"
                     outlined
                     dense
@@ -71,7 +71,7 @@
                 ></v-text-field>
                 
                 <v-text-field
-                    v-model="value.roomPw"
+                    v-model="value.room_pw"
                     label="Room Password"
                     :type="showPassword ? 'text' : 'password'"
                     outlined
@@ -81,7 +81,7 @@
                 ></v-text-field>
                 
                 <v-text-field
-                    v-model="value.roomName"
+                    v-model="value.room_name"
                     label="Room Name"
                     outlined
                     dense
@@ -95,7 +95,7 @@
                     </v-list-item-icon>
                     <v-list-item-content>
                         <v-list-item-title>비밀번호</v-list-item-title>
-                        <v-list-item-subtitle>{{ value.roomPw ? '설정됨' : '설정되지 않음' }}</v-list-item-subtitle>
+                        <v-list-item-subtitle>{{ value.room_pw ? '설정됨' : '설정되지 않음' }}</v-list-item-subtitle>
                     </v-list-item-content>
                 </v-list-item>
             </v-list>
@@ -176,6 +176,7 @@
             editMode: Boolean,
             isNew: Boolean,
             offline: Boolean,
+            createMode: Boolean,
         },
         data: () => ({
             snackbar: {
@@ -187,8 +188,7 @@
             enterChatRoomDiagram: false,
             showPassword: false,
         }),
-	async created() {
-        },
+        async created() {},
         methods: {
             decode(value) {
                 return decodeURIComponent(value);
@@ -220,49 +220,57 @@
             edit() {
                 this.editMode = true;
             },
-            async save(){
+            async save() {
                 try {
-                    var temp = null;
+                    if (this.createMode) {
+                        // 생성 모드
+                        const { error } = await this.$supabase
+                            .from('chatrooms')
+                            .insert([{
+                                room_id: this.value.room_id,
+                                room_pw: this.value.room_pw,
+                                room_name: this.value.room_name
+                            }]);
 
-                    if(!this.offline) {
-                        if(this.isNew) {
-                            temp = await axios.post(axios.fixUrl('/chatRooms'), this.value)
-                        } else {
-                            temp = await axios.put(axios.fixUrl(this.value._links.self.href), this.value)
-                        }
-                    }
+                        if (error) throw error;
 
-                    if(this.value!=null) {
-                        for(var k in temp.data) this.value[k]=temp.data[k];
-                    } else {
-                        this.value = temp.data;
-                    }
-
-                    this.editMode = false;
-                    this.$emit('input', this.value);
-
-                    if (this.isNew) {
                         this.$emit('add', this.value);
                     } else {
+                        // 수정 모드
+                        const { error } = await this.$supabase
+                            .from('chatrooms')
+                            .update({
+                                room_pw: this.value.room_pw,
+                                room_name: this.value.room_name
+                            })
+                            .eq('room_id', this.value.room_id); // room_id를 기준으로 수정
+
+                        if (error) throw error;
+
                         this.$emit('edit', this.value);
                     }
 
-                    location.reload()
+                    this.editMode = false;
+                    location.reload(); // 페이지 새로고침
 
-                } catch(e) {
-                    this.snackbar.status = true
-                    if(e.response && e.response.data.message) {
-                        this.snackbar.text = e.response.data.message
+                } catch (e) {
+                    this.snackbar.status = true;
+                    if (e.response && e.response.data.message) {
+                        this.snackbar.text = e.response.data.message;
                     } else {
-                        this.snackbar.text = e
+                        this.snackbar.text = e.message || e; // 오류 메시지 출력
                     }
                 }
-                
             },
-            async remove(){
+            async remove() {
                 try {
                     if (!this.offline) {
-                        await axios.delete(axios.fixUrl(this.value._links.self.href))
+                        const { error } = await this.$supabase
+                            .from('chatrooms')
+                            .delete()
+                            .eq('room_id', this.value.room_id);
+
+                        if (error) throw error;
                     }
 
                     this.editMode = false;
@@ -271,12 +279,12 @@
                     this.$emit('input', this.value);
                     this.$emit('delete', this.value);
 
-                } catch(e) {
-                    this.snackbar.status = true
-                    if(e.response && e.response.data.message) {
-                        this.snackbar.text = e.response.data.message
+                } catch (e) {
+                    this.snackbar.status = true;
+                    if (e.response && e.response.data.message) {
+                        this.snackbar.text = e.response.data.message;
                     } else {
-                        this.snackbar.text = e
+                        this.snackbar.text = e.message || e;
                     }
                 }
             },
@@ -304,22 +312,22 @@
             },
             async enterChatRoom(params) {
                 try {
-                    if(!this.offline) {
-                        var temp = await axios.put(axios.fixUrl(this.value._links['enterchatroom'].href), params)
-                        for(var k in temp.data) {
-                            this.value[k]=temp.data[k];
-                        }
+                    // if(!this.offline) {
+                    //     var temp = await axios.put(axios.fixUrl(this.value._links['enterchatroom'].href), params)
+                    //     for(var k in temp.data) {
+                    //         this.value[k]=temp.data[k];
+                    //     }
                         
                         // 사용자 정보 로컬스토리지에 저장
                         localStorage.setItem('chatUserInfo', JSON.stringify({
-                            userId: params.userId,
-                            userName: params.userName,
-                            userPassWord: params.userPassWord
+                            user_id: params.user_id,
+                            user_name: params.user_name,
+                            user_pw: params.user_pw
                         }));
                         
                         // 채팅방으로 라우터 이동
-                        this.$router.push(`/chats/chatRooms/${this.value.roomId}`);
-                    }
+                        this.$router.push(`/chats/chatRooms/${this.value.room_id}`);
+                    // }
 
                     this.editMode = false;
                     this.closeEnterChatRoom();

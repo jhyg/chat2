@@ -1,9 +1,11 @@
- /*eslint-disable*/
+/*eslint-disable*/
 import Vue from "vue";
 import App from "./App.vue";
 import vuetify from "./plugins/vuetify";
 import Managing from "./components";
 import router from './router';
+import { supabase } from './supabase'; // Supabase 클라이언트 가져오기
+
 Vue.config.productionTip = false;
 require('./GlobalStyle.css');
 
@@ -60,6 +62,9 @@ Vue.prototype.$ManagerLists.forEach(function(item, idx) {
     }
   })
 })
+
+// Supabase 클라이언트를 Vue 인스턴스에 추가
+Vue.prototype.$supabase = supabase;
 
 new Vue({
   vuetify,

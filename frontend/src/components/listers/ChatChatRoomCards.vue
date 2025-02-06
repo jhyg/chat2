@@ -22,7 +22,7 @@
                         hide-overlay
                         transition="dialog-bottom-transition"
                 >
-                    <ChatChatRoom :offline="offline" class="video-card" :isNew="true" :editMode="true" v-model="newValue" 
+                    <ChatChatRoom :offline="offline" class="video-card" :isNew="true" :editMode="true" :createMode="true" v-model="newValue" 
                             @add="append" v-if="tick"/>
 
                     <v-btn
@@ -76,7 +76,7 @@
 
 <script>
 
-    const axios = require('axios').default;
+    // const axios = require('axios').default;
     import ChatChatRoom from './../ChatChatRoom.vue';
 
     export default {
@@ -99,17 +99,31 @@
                 if(!me.values) me.values = [];
                 return;
             } 
-
-            var temp = await axios.get(axios.fixUrl('/chatRooms'))
-            me.values = temp.data._embedded.chatRooms;
+            
+            await this.loadChatRooms();
             
             me.newValue = {
-                'roomId': '',
-                'roomPw': '',
-                'roomName': '',
+                'room_id': '',
+                'room_pw': '',
+                'room_name': '',
             }
         },
         methods:{
+            async loadChatRooms(){
+                try {
+                    const { data, error } = await this.$supabase
+                    .from('chatrooms')
+                    .select('*');
+
+                    if (error) {
+                    throw error;
+                    }
+
+                    this.values = data || [];
+                } catch (e) {
+                    console.error('Error loading chat rooms:', e);
+                }
+            },
             closeDialog(){
                 this.openDialog = false
             },
