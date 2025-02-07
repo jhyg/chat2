@@ -41,13 +41,14 @@ npm run serve
         room_id VARCHAR(255) PRIMARY KEY,
         room_pw VARCHAR(255),
         room_name VARCHAR(255),
-        created_at TIMESTAMP DEFAULT NOW()
+        is_private BOOLEAN DEFAULT FALSE
     );
 
     CREATE TABLE IF NOT EXISTS messages (
         message_id VARCHAR(255) PRIMARY KEY,
         room_id VARCHAR(255),
         user_id VARCHAR(255),
+        user_name VARCHAR(255),
         content TEXT,
         timestamp TIMESTAMP DEFAULT NOW()
     );

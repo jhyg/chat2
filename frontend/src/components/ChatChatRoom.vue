@@ -21,9 +21,6 @@
                         #{{ value.room_id }}
                     </v-chip>
                 </div>
-                <div class="subtitle-2 grey--text">
-                    {{ value.created_at }}
-                </div>
             </div>
 
             <v-spacer></v-spacer>
@@ -60,7 +57,7 @@
         <v-divider></v-divider>
 
         <v-card-text class="chat-room-content">
-            <v-form v-if="editMode" ref="form">
+            <v-form v-if="editMode" ref="form" v-model="isFormValid">
                 <v-text-field
                     v-if="editMode"
                     v-model="value.room_id"
@@ -68,23 +65,33 @@
                     outlined
                     dense
                     :disabled="!isNew"
+                    :rules="[v => !!v || 'Room ID를 입력해주세요']"
                 ></v-text-field>
-                
-                <v-text-field
-                    v-model="value.room_pw"
-                    label="Room Password"
-                    :type="showPassword ? 'text' : 'password'"
-                    outlined
-                    dense
-                    :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                    @click:append="showPassword = !showPassword"
-                ></v-text-field>
-                
+
                 <v-text-field
                     v-model="value.room_name"
                     label="Room Name"
                     outlined
                     dense
+                    :rules="[v => !!v || 'Room Name을 입력해주세요']"
+                ></v-text-field>
+                
+                <v-switch
+                    v-model="isPrivate"
+                    label="Private Room"
+                    inset
+                ></v-switch>
+                
+                <v-text-field
+                    v-if="isPrivate"
+                    v-model="value.room_pw"
+                    label="Room Password"
+                    :type="showPassword ? 'text' : 'password'"
+                    outlined
+                    dense
+                    :rules="[v => !!v || 'Room Password를 입력해주세요']"
+                    :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                    @click:append="showPassword = !showPassword"
                 ></v-text-field>
             </v-form>
             
@@ -95,7 +102,7 @@
                     </v-list-item-icon>
                     <v-list-item-content>
                         <v-list-item-title>비밀번호</v-list-item-title>
-                        <v-list-item-subtitle>{{ value.room_pw ? '설정됨' : '설정되지 않음' }}</v-list-item-subtitle>
+                        <v-list-item-subtitle>{{ value.is_private ? '설정됨' : '설정되지 않음' }}</v-list-item-subtitle>
                     </v-list-item-content>
                 </v-list-item>
             </v-list>
@@ -108,6 +115,7 @@
                 <v-btn
                     color="primary"
                     text
+                    :disabled="!isFormValid"
                     @click="save"
                 >
                     <v-icon left>mdi-content-save</v-icon>
@@ -137,6 +145,7 @@
         <!-- Enter Chat Room Dialog -->
         <v-dialog v-model="enterChatRoomDiagram" max-width="500px">
             <EnterChatRoomCommand
+                :chatRoomInfo="value"
                 @closeDialog="closeEnterChatRoom"
                 @enterChatRoom="enterChatRoom"
             ></EnterChatRoomCommand>
@@ -187,6 +196,8 @@
             },
             enterChatRoomDiagram: false,
             showPassword: false,
+            isPrivate: false,
+            isFormValid: false,
         }),
         async created() {},
         methods: {
@@ -229,7 +240,8 @@
                             .insert([{
                                 room_id: this.value.room_id,
                                 room_pw: this.value.room_pw,
-                                room_name: this.value.room_name
+                                room_name: this.value.room_name,
+                                is_private: this.isPrivate
                             }]);
 
                         if (error) throw error;
@@ -241,7 +253,8 @@
                             .from('chatrooms')
                             .update({
                                 room_pw: this.value.room_pw,
-                                room_name: this.value.room_name
+                                room_name: this.value.room_name,
+                                is_private: this.isPrivate
                             })
                             .eq('room_id', this.value.room_id); // room_id를 기준으로 수정
 
@@ -310,25 +323,9 @@
                     }
                 }
             },
-            async enterChatRoom(params) {
+            async enterChatRoom() {
                 try {
-                    // if(!this.offline) {
-                    //     var temp = await axios.put(axios.fixUrl(this.value._links['enterchatroom'].href), params)
-                    //     for(var k in temp.data) {
-                    //         this.value[k]=temp.data[k];
-                    //     }
-                        
-                        // 사용자 정보 로컬스토리지에 저장
-                        localStorage.setItem('chatUserInfo', JSON.stringify({
-                            user_id: params.user_id,
-                            user_name: params.user_name,
-                            user_pw: params.user_pw
-                        }));
-                        
-                        // 채팅방으로 라우터 이동
-                        this.$router.push(`/chats/chatRooms/${this.value.room_id}`);
-                    // }
-
+                    this.$router.push(`/chats/chatRooms/${this.value.room_id}`);
                     this.editMode = false;
                     this.closeEnterChatRoom();
                 } catch(e) {

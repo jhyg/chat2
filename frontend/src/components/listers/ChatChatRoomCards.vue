@@ -106,6 +106,7 @@
                 'room_id': '',
                 'room_pw': '',
                 'room_name': '',
+                'is_private': false
             }
         },
         methods:{

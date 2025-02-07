@@ -17,8 +17,8 @@
                     
                     <!-- 상대방 메시지 -->
                     <template v-if="message.user_id !== userInfo.user_id">
-                        <div class="user-name">{{ message.user_id }}</div>
-                        <div class="message-bubble other">
+                        <div class="user-name">{{ message.user_name }} ({{ message.user_id }})</div>
+                        <div class="message-bubble other" style="width: fit-content;">
                             {{ message.content }}
                         </div>
                     </template>
@@ -77,6 +77,11 @@
             const storedUserInfo = localStorage.getItem('chatUserInfo');
             if (storedUserInfo) {
                 this.userInfo = JSON.parse(storedUserInfo);
+            } else {
+                this.$router.push(`/chats/chatRooms`);
+            }
+            if(!this.userInfo.rememberMe) {
+                localStorage.removeItem('chatUserInfo');
             }
             await this.loadChatRoomInfo();
             await this.loadMessages();
@@ -129,6 +134,7 @@
                         message_id: this.generateUUID(),
                         room_id: this.chatRoomInfo.room_id,
                         user_id: this.userInfo.user_id,
+                        user_name: this.userInfo.user_name,
                         content: this.newMessage,
                         timestamp: new Date().toISOString()
                     };

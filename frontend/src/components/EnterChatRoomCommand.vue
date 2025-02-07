@@ -10,13 +10,15 @@
         </v-card-title>
 
         <v-card-text class="pt-5">
-            <v-form ref="form">
-                
+            <v-form ref="form" v-model="isFormValid">
                 <v-text-field
                     v-model="value.user_id"
                     label="아이디"
                     prepend-inner-icon="mdi-account"
-                    :rules="[v => !!v || '아이디를 입력해주세요']"
+                    :rules="[
+                        v => !!v || '아이디를 입력해주세요',
+                        v => /.+@.+\..+/.test(v) || '올바른 이메일 형식을 입력해주세요'
+                    ]"
                     outlined
                     dense
                     class="mb-3"
@@ -33,8 +35,9 @@
                 ></v-text-field>
 
                 <v-text-field
-                    v-model="value.user_pw"
-                    label="비밀번호"
+                    v-if="chatRoomInfo && chatRoomInfo.is_private"
+                    v-model="value.room_pw"
+                    label="방 비밀번호"
                     prepend-inner-icon="mdi-lock"
                     :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
                     :type="showPassword ? 'text' : 'password'"
@@ -68,6 +71,7 @@
             </v-btn>
             <v-btn
                 color="primary"
+                :disabled="!isFormValid"
                 @click="enterChatRoom"
                 :loading="loading"
             >
@@ -99,9 +103,19 @@
 <script>
 export default {
     name: 'EnterChatRoomCommand',
+    props: {
+        chatRoomInfo: {
+            type: Object,
+            required: true
+        }
+    },
     data: () => ({
         editMode: true,
-        value: {},
+        value: {
+            user_id: '',
+            user_name: '',
+            room_pw: ''
+        },
         isFormValid: false,
         showPassword: false,
         loading: false,
@@ -111,9 +125,9 @@ export default {
             text: '',
             color: 'error',
             timeout: 3000
-        }
+        },
     }),
-    created() {
+    async created() {
         const storedUserInfo = localStorage.getItem('chatUserInfo');
         if (storedUserInfo) {
             this.value = JSON.parse(storedUserInfo);
@@ -127,12 +141,18 @@ export default {
             this.loading = true;
             try {
                 if (this.rememberMe) {
-                    localStorage.setItem('chatUserInfo', JSON.stringify(this.value));
+                    this.value.rememberMe = true;
                 } else {
-                    localStorage.removeItem('chatUserInfo');
+                    this.value.rememberMe = false;
                 }
-                
-                await this.$emit('enterChatRoom', this.value);
+                localStorage.setItem('chatUserInfo', JSON.stringify(this.value));
+
+                if (this.chatRoomInfo.is_private && this.value.room_pw !== this.chatRoomInfo.room_pw) {
+                    this.value.room_pw = '';
+                    return;
+                }
+
+                await this.$emit('enterChatRoom',);
             } catch (error) {
                 this.snackbar.text = '입장에 실패했습니다. 다시 시도해주세요.';
                 this.snackbar.show = true;
@@ -142,7 +162,11 @@ export default {
         },
         close() {
             if (!this.rememberMe) {
-                this.value = {};
+                this.value = {
+                    user_id: '',
+                    user_name: '',
+                    room_pw: ''
+                };
             }
             this.$emit('closeDialog');
         },
