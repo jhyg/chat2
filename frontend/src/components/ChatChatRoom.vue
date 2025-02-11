@@ -98,7 +98,7 @@
             <v-list v-else two-line>
                 <v-list-item>
                     <v-list-item-icon>
-                        <v-icon>mdi-shield-lock</v-icon>
+                        <v-icon>{{ value.is_private ? 'mdi-shield-lock' : 'mdi-shield-lock-open' }}</v-icon>
                     </v-list-item-icon>
                     <v-list-item-content>
                         <v-list-item-title>비밀번호</v-list-item-title>

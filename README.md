@@ -24,6 +24,7 @@ npm run serve
 
 3. Start Supabase
 	```
+    cd supabase
     supabase init
     supabase start
 	```

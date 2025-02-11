@@ -74,14 +74,13 @@
             newMessage: '',
         }),
         async created() {
-            const storedUserInfo = localStorage.getItem('chatUserInfo');
+            const storedUserInfo = localStorage.getItem('userInfo');
             if (storedUserInfo) {
                 // keyclock 구조에 맞게 수정
                 this.userInfo = JSON.parse(storedUserInfo);
             } else {
-                if (window.confirm('로그인 후 이용 가능한 서비스입니다.')) {
-                    this.$router.push('/chats/chatRooms')
-                }
+                alert('로그인 후 이용 가능한 서비스입니다.');
+                this.$router.push('/chats/chatRooms')
             }
             await this.loadChatRoomInfo();
             await this.loadMessages();
