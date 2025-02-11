@@ -338,7 +338,11 @@
                 }
             },
             openEnterChatRoom() {
-                this.enterChatRoomDiagram = true;
+                if(this.value.is_private){
+                    this.enterChatRoomDiagram = true;
+                } else {
+                    this.enterChatRoom()
+                }
             },
             closeEnterChatRoom() {
                 this.enterChatRoomDiagram = false;
