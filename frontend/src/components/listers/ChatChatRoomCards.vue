@@ -80,7 +80,7 @@
     import ChatChatRoom from './../ChatChatRoom.vue';
 
     export default {
-        name: 'ChatChatRoomManager',
+        name: 'ChatChatRoomCards',
         components: {
             ChatChatRoom,
         },
@@ -117,7 +117,7 @@
                     .select('*');
 
                     if (error) {
-                    throw error;
+                        throw error;
                     }
 
                     this.values = data || [];
