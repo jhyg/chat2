@@ -325,7 +325,7 @@
             },
             async enterChatRoom() {
                 try {
-                    this.$router.push(`/chats/chatRooms/${this.value.room_id}`);
+                    this.$emit('enterRoom', this.value.room_id);
                     this.editMode = false;
                     this.closeEnterChatRoom();
                 } catch(e) {

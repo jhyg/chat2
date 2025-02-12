@@ -1,5 +1,12 @@
 <template>
-    <div>
+    <div v-if="selectedRoomId">
+        <ChatChatRoomDetail
+            :roomId="selectedRoomId"
+            @unauthorized="handleUnauthorized"
+            @exit="handleExit"
+        />
+    </div>
+    <div v-else>
         <v-card
             class="mx-auto"
             outlined
@@ -23,7 +30,7 @@
                         transition="dialog-bottom-transition"
                 >
                     <ChatChatRoom :offline="offline" class="video-card" :isNew="true" :editMode="true" :createMode="true" v-model="newValue" 
-                            @add="append" v-if="tick"/>
+                            @add="append" v-if="tick" @enterRoom="handleEnterRoom"/>
 
                     <v-btn
                             style="postition:absolute; top:2%; right:2%"
@@ -69,7 +76,7 @@
             </div>
         </v-col>
         <v-row>
-            <ChatChatRoom :offline="offline" class="video-card" v-for="(value, index) in values" v-model="values[index]" v-bind:key="index" @delete="remove"/>
+            <ChatChatRoom :offline="offline" class="video-card" v-for="(value, index) in values" v-model="values[index]" v-bind:key="index" @delete="remove" @enterRoom="handleEnterRoom"/>
         </v-row>
     </div>
 </template>
@@ -78,11 +85,13 @@
 
     // const axios = require('axios').default;
     import ChatChatRoom from './../ChatChatRoom.vue';
+    import ChatChatRoomDetail from './ChatChatRoomDetail.vue';
 
     export default {
         name: 'ChatChatRoomCards',
         components: {
             ChatChatRoom,
+            ChatChatRoomDetail,
         },
         props: {
             offline: Boolean
@@ -92,6 +101,7 @@
             newValue: {},
             tick : true,
             openDialog : false,
+            selectedRoomId: null,
         }),
         async created() {
             var me = this;
@@ -153,6 +163,19 @@
                     this.$emit('input', this.values);
                 }
             },
+            handleEnterRoom(roomId) {
+                this.selectedRoomId = roomId;
+                // 채팅방 상세 화면 표시 로직
+            },
+            handleUnauthorized() {
+                // 인증되지 않은 사용자 처리 로직
+                alert('로그인 후 이용 가능한 서비스입니다.');
+                this.handleExit();
+            },
+            handleExit() {
+                this.selectedRoomId = null;
+                // 채팅방 목록으로 돌아가는 로직
+            }
         }
     };
 </script>

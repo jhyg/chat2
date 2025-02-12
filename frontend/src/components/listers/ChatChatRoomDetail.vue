@@ -1,6 +1,7 @@
 <template>
     <v-card outlined>
         <v-card-title class="chat-header">
+            <v-btn style="margin-right: 10px;" icon @click="goList"><v-icon>mdi-arrow-left</v-icon></v-btn>
             <v-icon left>mdi-chat</v-icon>
             {{chatRoomInfo.room_name}} 
             <v-chip small class="ml-2">
@@ -65,6 +66,10 @@
         name: 'ChatChatRoomDetail',
         components:{},
         props: {
+            roomId: {
+                type: String,
+                required: true
+            }
         },
         data: () => ({
             chatRoomInfo: null,
@@ -79,8 +84,8 @@
                 // keyclock 구조에 맞게 수정
                 this.userInfo = JSON.parse(storedUserInfo);
             } else {
-                alert('로그인 후 이용 가능한 서비스입니다.');
-                this.$router.push('/chats/chatRooms')
+                this.$emit('unauthorized');
+                return;
             }
             await this.loadChatRoomInfo();
             await this.loadMessages();
@@ -92,7 +97,7 @@
                     const { data, error } = await this.$supabase
                     .from('chatrooms')
                     .select('*')
-                    .eq('room_id', this.$route.params.id)
+                    .eq('room_id', this.roomId)
                     .single();
 
                     if (error) throw error;
@@ -107,7 +112,7 @@
                     const { data, error } = await this.$supabase
                     .from('messages')
                     .select('*')
-                    .eq('room_id', this.$route.params.id)
+                    .eq('room_id', this.roomId)
                     .order('timestamp', { ascending: true });
 
                     if (error) throw error;
@@ -120,7 +125,12 @@
             setupRealtimeMessages() {
                 this.$supabase
                 .channel('public:messages')
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `room_id=eq.${this.$route.params.id}` }, payload => {
+                .on('postgres_changes', { 
+                    event: 'INSERT', 
+                    schema: 'public', 
+                    table: 'messages', 
+                    filter: `room_id=eq.${this.roomId}`
+                }, payload => {
                     this.messages.push(payload.new);
                 })
                 .subscribe();
@@ -157,9 +167,7 @@
                 });
             },
             goList() {
-                var path = window.location.href.slice(window.location.href.indexOf("/#/"), window.location.href.lastIndexOf("/#"));
-                path = path.replace("/#/", "/");
-                this.$router.push(path);
+                this.$emit('exit');
             },
             edit() {
                 this.editMode = true;
