@@ -29,7 +29,7 @@
                         hide-overlay
                         transition="dialog-bottom-transition"
                 >
-                    <ChatChatRoom :offline="offline" class="video-card" :isNew="true" :editMode="true" :createMode="true" v-model="newValue" 
+                    <ChatChatRoom :offline="offline" :isNew="true" :editMode="true" :createMode="true" v-model="newValue" 
                             @add="append" v-if="tick" @enterRoom="handleEnterRoom"/>
 
                     <v-btn
@@ -76,16 +76,15 @@
             </div>
         </v-col>
         <v-row>
-            <ChatChatRoom :offline="offline" class="video-card" v-for="(value, index) in values" v-model="values[index]" v-bind:key="index" @delete="remove" @enterRoom="handleEnterRoom"/>
+            <ChatChatRoom :offline="offline" v-for="(value, index) in values" v-model="values[index]" v-bind:key="index" @delete="remove" @enterRoom="handleEnterRoom"/>
         </v-row>
     </div>
 </template>
 
 <script>
-
-    // const axios = require('axios').default;
     import ChatChatRoom from './../ChatChatRoom.vue';
     import ChatChatRoomDetail from './ChatChatRoomDetail.vue';
+    import { supabase } from '../../supabase';
 
     export default {
         name: 'ChatChatRoomCards',
@@ -122,8 +121,8 @@
         methods:{
             async loadChatRooms(){
                 try {
-                    const { data, error } = await this.$supabase
-                    .from('chatrooms')
+                    const { data, error } = await supabase
+                    .from('chat_rooms')
                     .select('*');
 
                     if (error) {
@@ -180,13 +179,4 @@
     };
 </script>
 
-
-<style>
-    .video-card {
-        width:300px; 
-        margin-left:4.5%; 
-        margin-top:50px; 
-        margin-bottom:50px;
-    }
-</style>
 

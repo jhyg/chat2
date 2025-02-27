@@ -24,7 +24,6 @@ npm run serve
 
 3. Start Supabase
 	```
-    cd supabase
     supabase init
     supabase start
 	```
@@ -38,7 +37,7 @@ npm run serve
 6. Create Tables
     Access the dashboard, go to SQL editor, enter the following SQL and execute:
     ```
-    CREATE TABLE IF NOT EXISTS chatrooms (
+    CREATE TABLE IF NOT EXISTS chat_rooms (
         room_id VARCHAR(255) PRIMARY KEY,
         room_pw VARCHAR(255),
         room_name VARCHAR(255),
@@ -62,3 +61,41 @@ npm run serve
     ```
     supabase stop
     ```
+
+# PBC 적용 방법
+
+1. 프로젝트 루트 디렉토리의 SNSApp.vue 에 다음 코드를 등록합니다.
+// 기존 v-main 태그에 v-else 및 상단에 <chat-chat-room-cards/> 추가
+<template>
+    <v-main v-if="openChatRoom"> 
+        <chat-app>
+            <chat-chat-room-cards/>
+        </chat-app>
+    </v-main>
+    <v-main v-else>
+        <!-- existing code .. -->
+    </v-main>
+</template>
+
+// openChatRoom 데이터 추가
+data : () => ({
+    openChatRoom: false,
+})
+
+// 함수 추가
+
+changeUrl() {
+    var path = document.location.href.split("#/")
+    this.urlPath = path[1];
+    this.flipped.fill(false);
+    this.openChatRoom = false; // 해당 라인 추가
+},
+startChat(){
+    this.openChatRoom = true
+}
+
+2. supabase.js 의 supabaseUrl 을 다음과 같이 수정합니다.
+
+supabaseUrl = 'localhost:54321' // gitpod 를 사용하는 경우 'https://54321-<username>.gitpod.io'
+
+3. 54321 port -> make public // gitpod 를 사용하는 경우

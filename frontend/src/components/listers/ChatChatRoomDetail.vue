@@ -1,33 +1,45 @@
 <template>
     <v-card outlined>
-        <v-card-title class="chat-header">
+        <v-card-title style="border-bottom: 1px solid #e0e0e0; background-color: #f5f5f5;">
             <v-btn style="margin-right: 10px;" icon @click="goList"><v-icon>mdi-arrow-left</v-icon></v-btn>
             <v-icon left>mdi-chat</v-icon>
-            {{chatRoomInfo.room_name}} 
+            <div>{{chatRoomInfo.room_name}} </div>
             <v-chip small class="ml-2">
                 Room #{{chatRoomInfo.room_id}}
             </v-chip>
         </v-card-title>
 
         <!-- 채팅 메시지 영역 -->
-        <v-card-text class="chat-container">
-            <div class="messages-wrapper">
+        <v-card-text style="height: 76vh; overflow-y: auto; padding: 20px; background-color: #f8f9fa;">
+            <div style="display: flex; flex-direction: column; gap: 12px;">
                 <div v-for="(message, index) in messages" 
                      :key="index"
-                     :class="['message-item', message.user_id === userInfo.user_id ? 'my-message' : 'other-message']">
+                     :style="{
+                         display: 'flex',
+                         flexDirection: 'column', 
+                         maxWidth: '70%',
+                         marginBottom: '12px',
+                         alignSelf: message.user_id === userInfo.user_id ? 'flex-end' : 'flex-start'
+                     }">
                     
                     <!-- 상대방 메시지 -->
                     <template v-if="message.user_id !== userInfo.user_id">
-                        <div class="user-name">{{ message.user_name }} ({{ message.user_id }})</div>
-                        <div class="message-bubble other" style="width: fit-content;">
-                            {{ message.content }}
+                        <div style="font-size: 0.8rem; color: #666; margin-bottom: 4px; margin-left: 8px;">{{ message.user_name }} ({{ message.user_id }})</div>
+                            <div style="display: flex; align-items: flex-end; gap: 6px; justify-content: flex-start;">
+                                <div style="padding: 8px 16px; border-radius: 16px; position: relative; word-wrap: break-word; background-color: white; color: #333; border-top-left-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); width: fit-content;">
+                                    {{ message.content }}
+                                </div>
+                            <div style="font-size: 0.75rem; color: #999; min-width: fit-content;">{{ formatTime(message.timestamp) }}</div>
                         </div>
                     </template>
 
                     <!-- 내 메시지 -->
                     <template v-else>
-                        <div class="message-bubble mine">
-                            {{ message.content }}
+                        <div style="display: flex; align-items: flex-end; gap: 6px; justify-content: flex-end;">
+                            <div style="font-size: 0.75rem; color: #999; min-width: fit-content;">{{ formatTime(message.timestamp) }}</div>
+                            <div style="padding: 8px 16px; border-radius: 16px; position: relative; word-wrap: break-word; background-color: #e3f2fd; color: #1976d2; border-top-right-radius: 4px;">
+                                {{ message.content }}
+                            </div>
                         </div>
                     </template>
                 </div>
@@ -35,7 +47,7 @@
         </v-card-text>
 
         <!-- 채팅 입력 영역 -->
-        <v-card-actions class="chat-input">
+        <v-card-actions style="padding: 16px; border-top: 1px solid #e0e0e0; background-color: white;">
             <v-text-field
                 v-model="newMessage"
                 placeholder="메시지를 입력하세요..."
@@ -61,6 +73,7 @@
 
 <script>
     const axios = require('axios').default;
+    import { supabase } from '../../supabase';
 
     export default {
         name: 'ChatChatRoomDetail',
@@ -72,7 +85,7 @@
             }
         },
         data: () => ({
-            chatRoomInfo: null,
+            chatRoomInfo: {},
             editMode: false,
             messages: [],
             userInfo: null,
@@ -94,8 +107,8 @@
         methods: {
             async loadChatRoomInfo() {
                 try {
-                    const { data, error } = await this.$supabase
-                    .from('chatrooms')
+                    const { data, error } = await supabase
+                    .from('chat_rooms')
                     .select('*')
                     .eq('room_id', this.roomId)
                     .single();
@@ -109,7 +122,7 @@
             },
             async loadMessages() {
                 try {
-                    const { data, error } = await this.$supabase
+                    const { data, error } = await supabase
                     .from('messages')
                     .select('*')
                     .eq('room_id', this.roomId)
@@ -123,7 +136,7 @@
                 }
             },
             setupRealtimeMessages() {
-                this.$supabase
+                supabase
                 .channel('public:messages')
                 .on('postgres_changes', { 
                     event: 'INSERT', 
@@ -145,10 +158,10 @@
                         user_id: this.userInfo.user_id,
                         user_name: this.userInfo.user_name,
                         content: this.newMessage,
-                        timestamp: new Date().toISOString()
+                        timestamp: new Date(new Date().getTime() + (9 * 60 * 60 * 1000)).toISOString()
                     };
 
-                    const { error } = await this.$supabase
+                    const { error } = await supabase
                     .from('messages')
                     .insert([messageData]);
 
@@ -187,73 +200,16 @@
                     console.log(e)
                 }
             },
+            formatTime(timestamp) {
+                if (!timestamp) return '';
+                const date = new Date(timestamp);
+                return date.toLocaleString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                });
+            },
         },
     };
 </script>
 
-<style scoped>
-.chat-header {
-    border-bottom: 1px solid #e0e0e0;
-    background-color: #f5f5f5;
-}
-
-.chat-container {
-    height: 60vh;
-    overflow-y: auto;
-    padding: 20px;
-    background-color: #f8f9fa;
-}
-
-.messages-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.message-item {
-    display: flex;
-    flex-direction: column;
-    max-width: 70%;
-}
-
-.my-message {
-    align-self: flex-end;
-}
-
-.other-message {
-    align-self: flex-start;
-}
-
-.user-name {
-    font-size: 0.8rem;
-    color: #666;
-    margin-bottom: 4px;
-    margin-left: 8px;
-}
-
-.message-bubble {
-    padding: 8px 16px;
-    border-radius: 16px;
-    position: relative;
-    word-wrap: break-word;
-}
-
-.message-bubble.mine {
-    background-color: #e3f2fd;
-    color: #1976d2;
-    border-top-right-radius: 4px;
-}
-
-.message-bubble.other {
-    background-color: white;
-    color: #333;
-    border-top-left-radius: 4px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-}
-
-.chat-input {
-    padding: 16px;
-    border-top: 1px solid #e0e0e0;
-    background-color: white;
-}
-</style>

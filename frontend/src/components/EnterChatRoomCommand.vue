@@ -1,7 +1,7 @@
 <template>
-    <v-card outlined class="enter-chat-dialog">
-        <v-card-title class="chat-dialog-header">
-            <v-icon large color="primary" class="mr-3">mdi-account-circle</v-icon>
+    <v-card outlined style="border-radius: 8px;">
+        <v-card-title style="background-color: #f8f9fa; border-bottom: 1px solid #e9ecef;">
+            <v-icon large color="primary" style="margin-right: 12px;">mdi-account-circle</v-icon>
             채팅방 입장
             <v-spacer></v-spacer>
             <v-btn icon @click="close">
@@ -9,7 +9,7 @@
             </v-btn>
         </v-card-title>
 
-        <v-card-text class="pt-5">
+        <v-card-text style="padding-top: 20px;">
             <v-form ref="form" v-model="isFormValid">
                 <v-text-field
                     v-if="chatRoomInfo && chatRoomInfo.is_private"
@@ -22,19 +22,21 @@
                     :rules="[v => !!v || '비밀번호를 입력해주세요']"
                     outlined
                     dense
-                    class="mb-3"
+                    style="margin-bottom: 12px; transition: all 0.3s;"
+                    @mouseover="$event.target.style.transform = 'translateX(4px)'"
+                    @mouseleave="$event.target.style.transform = 'translateX(0)'"
                 ></v-text-field>
             </v-form>
         </v-card-text>
 
         <v-divider></v-divider>
 
-        <v-card-actions class="pa-4">
+        <v-card-actions style="padding: 16px;">
             <v-spacer></v-spacer>
             <v-btn
                 text
                 @click="close"
-                class="mr-2"
+                style="margin-right: 8px; text-transform: none;"
             >
                 취소
             </v-btn>
@@ -43,6 +45,7 @@
                 :disabled="!isFormValid"
                 @click="enterChatRoom"
                 :loading="loading"
+                style="text-transform: none;"
             >
                 <v-icon left>mdi-login</v-icon>
                 입장하기
@@ -61,6 +64,7 @@
                     text
                     v-bind="attrs"
                     @click="snackbar.show = false"
+                    style="text-transform: none;"
                 >
                     닫기
                 </v-btn>
@@ -118,26 +122,3 @@ export default {
     }
 }
 </script>
-
-<style scoped>
-.enter-chat-dialog {
-    border-radius: 8px;
-}
-
-.chat-dialog-header {
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #e9ecef;
-}
-
-.v-text-field {
-    transition: all 0.3s;
-}
-
-.v-text-field:hover {
-    transform: translateX(4px);
-}
-
-.v-btn {
-    text-transform: none;
-}
-</style>

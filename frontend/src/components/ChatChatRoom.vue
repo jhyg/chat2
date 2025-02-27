@@ -1,20 +1,20 @@
 <template>
-    <v-card class="chat-room-card" outlined>
-        <v-card-title class="chat-room-header">
+    <v-card style="width: 450px; height: 100%; margin-left:4.5%; margin-top:50px; margin-bottom:50px; transition: all 0.3s;" outlined>
+        <v-card-title style="background-color: #f8f9fa;">
             <v-avatar
                 color="primary"
                 size="40"
-                class="mr-3"
+                style="margin-right: 12px;"
             >
-                <span class="white--text">{{ value.room_name ? value.room_name[0].toUpperCase() : 'C' }}</span>
+                <span style="color: white;">{{ value.room_name ? value.room_name[0].toUpperCase() : 'C' }}</span>
             </v-avatar>
             
-            <div class="chat-room-title">
-                <div class="title" v-if="value">
+            <div style="overflow: hidden;">
+                <div v-if="value">
                     {{ value.room_name }}
                     <v-chip
                         x-small
-                        class="ml-2"
+                        style="margin-left: 8px;"
                         color="primary"
                         label
                     >
@@ -28,6 +28,7 @@
             <v-menu bottom left>
                 <template v-slot:activator="{ on, attrs }">
                     <v-btn
+                        v-if="!editMode"
                         icon
                         v-bind="attrs"
                         v-on="on"
@@ -56,9 +57,10 @@
 
         <v-divider></v-divider>
 
-        <v-card-text class="chat-room-content">
+        <v-card-text style="padding: 20px;">
             <v-form v-if="editMode" ref="form" v-model="isFormValid">
                 <v-text-field
+                    style="margin-top: 10px;"
                     v-if="editMode"
                     v-model="value.room_id"
                     label="Room ID"
@@ -110,13 +112,14 @@
 
         <v-divider></v-divider>
 
-        <v-card-actions class="chat-room-actions">
+        <v-card-actions style="padding: 16px;">
             <template v-if="editMode">
                 <v-btn
                     color="primary"
                     text
                     :disabled="!isFormValid"
                     @click="save"
+                    style="text-transform: none;"
                 >
                     <v-icon left>mdi-content-save</v-icon>
                     저장
@@ -125,6 +128,7 @@
                     text
                     @click="editMode = false"
                     v-if="!isNew"
+                    style="text-transform: none;"
                 >
                     취소
                 </v-btn>
@@ -134,7 +138,7 @@
                     color="primary"
                     outlined
                     @click="openEnterChatRoom"
-                    class="flex-grow-1"
+                    style="flex-grow: 1; text-transform: none;"
                 >
                     <v-icon left>mdi-login</v-icon>
                     입장하기
@@ -164,6 +168,7 @@
                     text
                     v-bind="attrs"
                     @click="snackbar.status = false"
+                    style="text-transform: none;"
                 >
                     닫기
                 </v-btn>
@@ -174,6 +179,8 @@
 
 <script>
     const axios = require('axios').default;
+
+    import { supabase } from '../supabase';
 
 
     export default {
@@ -235,8 +242,8 @@
                 try {
                     if (this.createMode) {
                         // 생성 모드
-                        const { error } = await this.$supabase
-                            .from('chatrooms')
+                        const { error } = await supabase
+                            .from('chat_rooms')
                             .insert([{
                                 room_id: this.value.room_id,
                                 room_pw: this.value.room_pw,
@@ -249,8 +256,8 @@
                         this.$emit('add', this.value);
                     } else {
                         // 수정 모드
-                        const { error } = await this.$supabase
-                            .from('chatrooms')
+                        const { error } = await supabase
+                            .from('chat_rooms')
                             .update({
                                 room_pw: this.value.room_pw,
                                 room_name: this.value.room_name,
@@ -278,8 +285,8 @@
             async remove() {
                 try {
                     if (!this.offline) {
-                        const { error } = await this.$supabase
-                            .from('chatrooms')
+                        const { error } = await supabase
+                            .from('chat_rooms')
                             .delete()
                             .eq('room_id', this.value.room_id);
 
@@ -350,36 +357,3 @@
         },
     }
 </script>
-
-<style scoped>
-.chat-room-card {
-    width: 450px;
-    height: 100%;
-    transition: all 0.3s;
-}
-
-.chat-room-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
-}
-
-.chat-room-header {
-    background-color: #f8f9fa;
-}
-
-.chat-room-title {
-    overflow: hidden;
-}
-
-.chat-room-content {
-    padding: 20px;
-}
-
-.chat-room-actions {
-    padding: 16px;
-}
-
-.v-btn {
-    text-transform: none;
-}
-</style>
