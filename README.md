@@ -99,3 +99,6 @@ startChat(){
 supabaseUrl = 'localhost:54321' // gitpod 를 사용하는 경우 'https://54321-<username>.gitpod.io'
 
 3. 54321 port -> make public // gitpod 를 사용하는 경우
+
+## PBC 적용 방법
+https://github.com/kyusooK/Cluster-distribute-rule/blob/main/README.md
